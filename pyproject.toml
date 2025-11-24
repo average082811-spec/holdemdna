@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "holdemdna"
+version = "0.1.0"
+description = "HoldemDNA Purple Lab – psychology, strategy, and mental analysis toolkit"
+authors = [{name = "HoldemDNA", email = "support@example.com"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.scripts]
+holdemdna = "holdemdna.cli:main"
