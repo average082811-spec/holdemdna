@@ -3,15 +3,21 @@ from __future__ import annotations
 
 import argparse
 import json
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
 from .analyzer import analyze_player, serialize_report
-from .models import PlayerProfile, SessionSnapshot
+from .models import PlayerProfile, SessionReport, SessionSnapshot
 
 
 def _load_profile(path: Path) -> PlayerProfile:
-    data = json.loads(path.read_text())
+    if not path.exists():
+        raise FileNotFoundError(f"Profile file not found: {path}")
+    try:
+        data = json.loads(path.read_text())
+    except JSONDecodeError as exc:
+        raise ValueError(f"Invalid profile JSON in {path}: {exc}") from exc
     sessions = [SessionSnapshot(**session) for session in data.pop("sessions", [])]
     return PlayerProfile(**data, sessions=sessions)
 
@@ -37,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _print_report(name: str, report) -> None:
+def _print_report(name: str, report: SessionReport) -> None:
     print(f"HoldemDNA Report :: {name}")
     print("-" * 40)
     print(f"Strategy Score : {report.strategy_score:.1f}")
