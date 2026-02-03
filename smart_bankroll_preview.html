@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon"
+        href="https://res.cloudinary.com/dgoubfc7q/image/upload/v1763440405/holdemdna.logo_om87xf.png">
+    <meta name="theme-color" content="#F8F9FD">
+    <title>HoldemDNA Smart Bankroll</title>
+
+    <link href="https://cdn.jsdelivr.net/gh/sun-typeface/suit/suit.css" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #9D8CFF;
+            --primary-dark: #7C66FF;
+            --primary-soft: #F3F1FF;
+            --accent-pink: #FF6B8B;
+            --accent-blue: #64B5F6;
+            --bg-color: #F8F9FD;
+            --card-bg: #FFFFFF;
+            --text-main: #2C2C46;
+            --text-sub: #8E8EA8;
+            --danger: #FF5252;
+            --success: #00E676;
+            --shadow: 0 8px 24px rgba(157, 140, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'SUIT', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            overscroll-behavior-y: none;
+        }
+
+        #root {
+            width: 100%;
+            max-width: 500px;
+            padding-bottom: 110px;
+            position: relative;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+            border: 1px solid #F1F2F6;
+        }
+
+        .stat-box {
+            background: #F8F9FD;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .stat-val {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        button {
+            border: none;
+            outline: none;
+            background: none;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        input {
+            font-family: inherit;
+            border: none;
+            outline: none;
+            background: transparent;
+        }
+
+        textarea {
+            font-family: inherit;
+            border: none;
+            outline: none;
+        }
+
+        select {
+            font-family: inherit;
+            border: none;
+            outline: none;
+            background: transparent;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #FFF;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px;
+            padding: 30px 24px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .seg-control {
+            background: #EBEBF2;
+            border-radius: 12px;
+            padding: 4px;
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .seg-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #999;
+            transition: all 0.2s;
+        }
+
+        .seg-btn.active {
+            background: #FFF;
+            color: var(--primary-dark);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Custom Bar */
+        .bar-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .bar-label {
+            width: 80px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 12px;
+            background: #F1F2F6;
+            border-radius: 6px;
+            margin: 0 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+        }
+
+        .bar-val {
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            width: 40px;
+            text-align: right;
+        }
+
+        /* Daily Group Logic */
+        .daily-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-radius: 16px;
+            background: #FFF;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            cursor: pointer;
+            border: 1px solid #F1F2F6;
+        }
+
+        .daily-header:active {
+            background: #FAFAFA;
+        }
+
+        .session-item {
+            border-top: 1px solid #F1F2F6;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #FBFCFD;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const formatKRW = (n) => n?.toLocaleString('ko-KR') || '0';
+        const LOGO_URL = "https://res.cloudinary.com/dgoubfc7q/image/upload/v1763440405/holdemdna.logo_om87xf.png";
+
+        // Sound System (Web Audio API)
+        const soundEngine = {
+            ctx: null,
+            init: function () {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            playTone: function (freq, type, duration, time = 0) {
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime + time);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime + time);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + time + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(this.ctx.currentTime + time);
+                osc.stop(this.ctx.currentTime + time + duration);
+            },
+            playWin: function () {
+                this.playTone(523.25, 'sine', 0.6, 0);   // C5
+                this.playTone(659.25, 'sine', 0.6, 0.1); // E5
+                this.playTone(783.99, 'sine', 0.8, 0.2); // G5
+                this.playTone(1046.50, 'sine', 1.0, 0.3);// C6
+            },
+            playSave: function () {
+                this.playTone(800, 'sine', 0.1, 0);
+            },
+            playClick: function () {
+                // Very subtle click
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+        };
+
+        // Confetti Trigger
+        const triggerWinEffect = () => {
+            soundEngine.playWin(); // Sound
+            const duration = 2000;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({
+                    particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#9D8CFF', '#00E676', '#FFD700']
+                });
+                confetti({
+                    particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#9D8CFF', '#00E676', '#FFD700']
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        };
+
+        const TAGS_DB = {
+            // WIN Scenario
+            SKILL: ['최적의 밸류벳', '블러프 성공', '상대 리딩 성공', '히어로 콜 성공', '익스플로잇 성공'],
+            LUCK: ['런이 좋음', '셋업 승리', '플립 승리', '드로우 적중', '넛(Nut) 완성'],
+
+            // LOSS Scenario
+            MISTAKE: ['오버 블러프(실패)', '잘못된 히어로콜', '밸류 벳 놓침', '상대 리딩 실패', '무리한 잼'],
+            BADBEAT: ['배드빗', '셋업 패배', '플립 패배', '드로우 실패', '리버 억까']
+        };
+
+        const DNA_QUOTES = {
+            WIN: [
+                "승리는 인내심의 가장 달콤한 열매입니다.",
+                "오늘의 승리는 어제의 복기 덕분입니다.",
+                "익절은 언제나 옳습니다. 자만하지 말고 지키세요.",
+                "고수에게 승리는 운이 아니라 확률의 수렴입니다.",
+                "이 기세를 몰아 방심만 하지 맙시다. A-Game 유지!",
+                "뱅크롤은 총알입니다. 낭비하지 말고 아끼세요."
+            ],
+            LOSS: [
+                "패배는 실력을 증명할 가장 좋은 스승입니다.",
+                "배드빗에 분노하지 마세요. 그저 확률일 뿐입니다.",
+                "틸트는 당신의 지갑을 털어가는 가장 큰 도둑입니다.",
+                "오늘의 패배를 복기하면, 내일의 승리가 됩니다.",
+                "잠시 쉬어가세요. 포커는 평생 칠 수 있습니다.",
+                "감정을 배제하고 수학을 믿으세요. 장기적으로 이깁니다."
+            ]
+        };
+
+        const getRandomQuote = (type) => {
+            const arr = DNA_QUOTES[type] || DNA_QUOTES['WIN'];
+            return arr[Math.floor(Math.random() * arr.length)];
+        };
+
+        // --- Components ---
+        const TrendChart = ({ data }) => {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+            useEffect(() => {
+                if (!canvasRef.current || data.length === 0) return;
+                const ctx = canvasRef.current.getContext('2d');
+                if (chartRef.current) chartRef.current.destroy();
+                let sum = 0;
+                const labels = data.map(d => d.date.slice(5, 10));
+                const values = data.map(d => { sum += d.net; return sum; });
+                chartRef.current = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Bankroll', data: values, borderColor: '#7C66FF', backgroundColor: 'rgba(124, 102, 255, 0.1)', borderWidth: 3, fill: true, tension: 0.4, pointBackgroundColor: '#FFF', pointBorderColor: '#7C66FF', pointRadius: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } }, layout: { padding: 10 } }
+                });
+                return () => chartRef.current?.destroy();
+            }, [data]);
+            return (<div style={{ height: '100px', width: '100%' }}><canvas ref={canvasRef} /></div>);
+        };
+
+        const LocationAnalysis = ({ data }) => {
+            if (data.length === 0) return null;
+            const locStats = {};
+            data.forEach(d => {
+                const loc = d.location || '미지정';
+                if (!locStats[loc]) locStats[loc] = { name: loc, profit: 0, count: 0 };
+                locStats[loc].profit += d.net;
+                locStats[loc].count += 1;
+            });
+            const sorted = Object.values(locStats).sort((a, b) => b.profit - a.profit);
+            const maxVal = Math.max(...sorted.map(s => Math.abs(s.profit)), 1);
+
+            return (
+                <div className="card">
+                    <h3 style={{ fontSize: '14px', marginBottom: '16px', color: '#555' }}>📍 장소별 손익 랭킹</h3>
+                    {sorted.map(loc => (
+                        <div key={loc.name} className="bar-container">
+                            <div className="bar-label">{loc.name}</div>
+                            <div className="bar-track"><div className="bar-fill" style={{ width: `${(Math.abs(loc.profit) / maxVal) * 100}%`, background: loc.profit >= 0 ? 'var(--success)' : 'var(--danger)' }}></div></div>
+                            <div className="bar-val" style={{ color: loc.profit >= 0 ? 'var(--success)' : 'var(--danger)' }}>{loc.profit > 0 ? '+' : ''}{Math.round(loc.profit / 10000)}만</div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const TagAnalysis = ({ data }) => {
+            if (data.length === 0) return null;
+            const tagStats = {};
+            data.forEach(d => {
+                if (d.subTags && d.subTags.length > 0) {
+                    d.subTags.forEach(t => {
+                        if (!tagStats[t]) tagStats[t] = { name: t, count: 0, profit: 0 };
+                        tagStats[t].count++;
+                        tagStats[t].profit += d.net;
+                    });
+                }
+            });
+            const sorted = Object.values(tagStats).sort((a, b) => b.count - a.count).slice(0, 5);
+            const maxCount = Math.max(...sorted.map(s => s.count), 1);
+            return (
+                <div className="card">
+                    <h3 style={{ fontSize: '14px', marginBottom: '16px', color: '#555' }}>🧬 핵심 팩터 빈도 (Top 5)</h3>
+                    {sorted.map(tag => (
+                        <div key={tag.name} className="bar-container">
+                            <div className="bar-label">{tag.name}</div>
+                            <div className="bar-track"><div className="bar-fill" style={{ width: `${(tag.count / maxCount) * 100}%`, background: '#7C66FF' }}></div></div>
+                            <div className="bar-val">{tag.count}회</div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const SimpleTimeSelector = ({ label, value, onChange }) => {
+            // Value format "HH:mm" or empty
+            const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+            const minutes = ['00', '10', '20', '30', '40', '50']; // 10 min steps
+
+            const [h, m] = value ? value.split(':') : ['', ''];
+
+            const handleChange = (newH, newM) => {
+                if (!newH) newH = '00';
+                if (!newM) newM = '00';
+                onChange(`${newH}:${newM}`);
+            };
+
+            return (
+                <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>{label}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#F8F9FD', borderRadius: '10px', padding: '0 8px', height: '46px' }}>
+                        <select value={h} onChange={(e) => handleChange(e.target.value, m)} style={{ flex: 1, height: '100%', fontSize: '15px', fontWeight: '700', textAlign: 'center', color: '#333' }}>
+                            <option value="" disabled>시</option>
+                            {hours.map(hh => <option key={hh} value={hh}>{hh}</option>)}
+                        </select>
+                        <span style={{ color: '#CCC' }}>:</span>
+                        <select value={m} onChange={(e) => handleChange(h, e.target.value)} style={{ flex: 1, height: '100%', fontSize: '15px', fontWeight: '700', textAlign: 'center', color: '#333' }}>
+                            <option value="" disabled>분</option>
+                            {minutes.map(mm => <option key={mm} value={mm}>{mm}</option>)}
+                        </select>
+                    </div>
+                </div>
+            );
+        };
+
+        const analyzePeriod = (data) => {
+            if (data.length === 0) return { factor: '-', reason: '데이터 없음', profit: 0, winRate: 0, count: 0, avg: 0, hourly: 0, totalHours: 0 };
+            let w = 0, profit = 0, totalHours = 0;
+            const factorCounts = {};
+            const subTagCounts = {};
+            data.forEach(d => {
+                profit += d.net;
+                if (d.net > 0) w++;
+                if (d.playTime) totalHours += d.playTime;
+                if (d.mainFactor) factorCounts[d.mainFactor] = (factorCounts[d.mainFactor] || 0) + 1;
+                if (d.subTags) d.subTags.forEach(t => subTagCounts[t] = (subTagCounts[t] || 0) + 1);
+            });
+            const avg = Math.round(profit / data.length);
+            const hourly = totalHours > 0 ? Math.round(profit / totalHours) : 0;
+            const topFactor = Object.keys(factorCounts).sort((a, b) => factorCounts[b] - factorCounts[a])[0] || '-';
+            const topSubTag = Object.keys(subTagCounts).sort((a, b) => subTagCounts[b] - subTagCounts[a])[0];
+            const factorName = { SKILL: '실력', RUN: '런', MENTAL: '멘탈' }[topFactor] || topFactor;
+            return { factor: factorName, reason: topSubTag || '', profit, winRate: Math.round((w / data.length) * 100), count: data.length, avg, hourly, totalHours };
+        };
+
+        // --- Daily Group Item Component ---
+        const DailyGroup = ({ date, sessions, onDelete, onEdit }) => {
+            const [expanded, setExpanded] = useState(false);
+
+            // Daily Stats
+            let totalProfit = 0;
+            let totalTime = 0;
+            sessions.forEach(s => {
+                totalProfit += s.net;
+                if (s.playTime) totalTime += s.playTime;
+            });
+
+            return (
+                <div style={{ marginBottom: '12px' }}>
+                    <div className="daily-header" onClick={() => { setExpanded(!expanded); soundEngine.playClick(); }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{ fontSize: '12px', fontWeight: '700', color: '#888', background: '#F1F2F6', borderRadius: '8px', padding: '4px 8px' }}>{new Date(date).getDate()}일</div>
+                            <div>
+                                <div style={{ fontSize: '13px', color: '#666', marginBottom: '2px' }}>{sessions.length} 게임 {totalTime > 0 ? `· ${totalTime.toFixed(1)}h` : ''}</div>
+                                <div style={{ fontSize: '15px', fontWeight: '800', color: totalProfit >= 0 ? '#00E676' : '#FF5252' }}>{totalProfit > 0 ? '+' : ''}{formatKRW(totalProfit)}</div>
+                            </div>
+                        </div>
+                        <div style={{ fontSize: '18px', color: '#CCC', transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: '0.2s' }}>▼</div>
+                    </div>
+
+                    {expanded && (
+                        <div style={{ borderRadius: '0 0 16px 16px', overflow: 'hidden', marginTop: '-8px', border: '1px solid #F1F2F6', borderTop: 'none', marginBottom: '16px' }}>
+                            {sessions.map(s => (
+                                <div key={s.id} className="session-item">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: s.gameMode === 'CASH' ? '#E3F2FD' : (s.gameMode === 'SIDE' ? '#F3E5F5' : '#FFF3E0'), fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{s.gameMode === 'CASH' ? '💰' : (s.gameMode === 'SIDE' ? '🎲' : '🏆')}</div>
+                                        <div>
+                                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#444' }}>{s.mainFactor}</div>
+                                            <div style={{ fontSize: '11px', color: '#999' }}>{s.location || '위치 미정'} {s.playTime ? `· ${s.playTime}h` : ''}</div>
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontSize: '14px', fontWeight: '700', color: s.net >= 0 ? '#00E676' : '#FF5252' }}>{s.net > 0 ? '+' : ''}{formatKRW(s.net)}</div>
+                                        <div style={{ marginTop: '4px', display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                                            <button onClick={(e) => { e.stopPropagation(); onEdit(s.id, s.date); }} style={{ fontSize: '10px', padding: '2px 6px', background: '#EEE', borderRadius: '4px', color: '#666' }}>수정</button>
+                                            <button onClick={(e) => { e.stopPropagation(); onDelete(s.id); }} style={{ fontSize: '10px', padding: '2px 6px', background: '#FFEBEE', borderRadius: '4px', color: '#FF5252' }}>삭제</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Main App ---
+        function App() {
+            const [view, setView] = useState('DASHBOARD');
+            const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('hdna_bnk_v12') || '[]'));
+            const [nickname, setNickname] = useState(() => localStorage.getItem('hdna_nickname') || '');
+
+            // Filter
+            const [dashMode, setDashMode] = useState('MONTH');
+            const [currentDate, setCurrentDate] = useState(new Date());
+
+            // Inputs
+            const [gameMode, setGameMode] = useState('CASH');
+            const [dateMode, setDateMode] = useState('AUTO');
+            const [manualDate, setManualDate] = useState(new Date().toISOString().slice(0, 10));
+
+            // Time Inputs
+            const [startTime, setStartTime] = useState('');
+            const [endTime, setEndTime] = useState('');
+            const [playTime, setPlayTime] = useState(0); // in hours
+
+            useEffect(() => {
+                if (startTime && endTime) {
+                    const startStr = `2000-01-01T${startTime}:00`;
+                    const endStr = `2000-01-01T${endTime}:00`;
+                    const start = new Date(startStr);
+                    let end = new Date(endStr);
+                    // Handle cross-day (e.g. 23:00 to 02:00)
+                    if (end < start) end.setDate(end.getDate() + 1);
+                    const diff = (end - start) / (1000 * 60 * 60); // hours
+                    setPlayTime(parseFloat(diff.toFixed(1)));
+                } else {
+                    setPlayTime(0);
+                }
+            }, [startTime, endTime]);
+
+            // Edit Mode State
+            const [editTargetId, setEditTargetId] = useState(null);
+            const [editNewDate, setEditNewDate] = useState('');
+
+            const [entryCount, setEntryCount] = useState(1);
+            const [moneyIn, setMoneyIn] = useState(0);
+            const [moneyOut, setMoneyOut] = useState(0);
+            const [rank, setRank] = useState(0);
+
+            const [mainFactor, setMainFactor] = useState(null);
+            const [subTags, setSubTags] = useState([]);
+            const [streetTags, setStreetTags] = useState([]);
+            const [contextTags, setContextTags] = useState([]);
+            const [location, setLocation] = useState('');
+            const [memo, setMemo] = useState('');
+
+            const [modalOpen, setModalOpen] = useState(false);
+            const [installModalOpen, setInstallModalOpen] = useState(false);
+            const [editModalOpen, setEditModalOpen] = useState(false); // Date Edit Modal
+
+            const [currentNet, setCurrentNet] = useState(0);
+            const [modalQuote, setModalQuote] = useState('');
+
+            const filteredHistory = useMemo(() => {
+                const y = currentDate.getFullYear();
+                const m = currentDate.getMonth();
+                return history.filter(h => {
+                    const d = new Date(h.date);
+                    if (dashMode === 'YEAR') return d.getFullYear() === y;
+                    if (dashMode === 'MONTH') return d.getFullYear() === y && d.getMonth() === m;
+                    return true;
+                }).sort((a, b) => b.id - a.id);
+            }, [history, dashMode, currentDate]);
+
+            const groupedHistory = useMemo(() => {
+                const groups = {};
+                filteredHistory.forEach(h => {
+                    // YEAR mode -> group by YYYY-MM, MONTH mode -> YYYY-MM-DD
+                    const d = dashMode === 'YEAR' ? h.date.slice(0, 7) : h.date.slice(0, 10);
+                    if (!groups[d]) groups[d] = [];
+                    groups[d].push(h);
+                });
+                return Object.keys(groups).sort((a, b) => new Date(b) - new Date(a)).map(date => ({
+                    date, sessions: groups[date]
+                }));
+            }, [filteredHistory, dashMode]);
+
+            const periodAnalysis = useMemo(() => analyzePeriod(filteredHistory), [filteredHistory]);
+
+            const changeDate = (delta) => {
+                const newD = new Date(currentDate);
+                if (dashMode === 'YEAR') newD.setFullYear(newD.getFullYear() + delta);
+                else newD.setMonth(newD.getMonth() + delta);
+                setCurrentDate(newD);
+            };
+
+            const handleSave = () => {
+                if (moneyIn === 0) return alert('투입 금액을 입력해주세요.');
+                const net = moneyOut - moneyIn;
+                const type = net >= 0 ? 'WIN' : 'LOSS';
+
+                // Validate Factor based on Result Type
+                if (net !== 0 && !mainFactor) return alert('승패의 핵심 요인을 선택해주세요.');
+
+                const sessionData = {
+                    date: dateMode === 'AUTO' ? new Date().toISOString() : new Date(manualDate).toISOString(),
+                    gameMode, location: location.trim(),
+                    entryCount: gameMode === 'TOURNEY' ? entryCount : 0,
+                    moneyIn, moneyOut, net, rank,
+                    startTime, endTime, playTime,
+                    mainFactor, subTags, streetTags, contextTags, memo
+                };
+
+                let updatedHistory;
+                if (editTargetId) {
+                    updatedHistory = history.map(h => h.id === editTargetId ? { ...sessionData, id: editTargetId } : h);
+                    alert('수정되었습니다.');
+                    setEditTargetId(null);
+                } else {
+                    updatedHistory = [{ ...sessionData, id: Date.now() }, ...history];
+                    setModalQuote(getRandomQuote(type));
+                    setCurrentNet(net); // Explicitly set for modal icon
+                    if (net > 0) triggerWinEffect();
+                    else soundEngine.playSave();
+                    setModalOpen(true);
+                }
+                setHistory(updatedHistory);
+                localStorage.setItem('hdna_bnk_v12', JSON.stringify(updatedHistory));
+                if (editTargetId) setView('DASHBOARD');
+            };
+
+            const handleDelete = (id) => {
+                if (window.confirm('정말로 이 기록을 삭제하시겠습니까? \n삭제된 데이터는 복구할 수 없습니다.')) {
+                    const next = history.filter(h => h.id !== id);
+                    setHistory(next);
+                    localStorage.setItem('hdna_bnk_v12', JSON.stringify(next));
+                }
+            };
+
+            const startFullEdit = (id) => {
+                const target = history.find(h => h.id === id);
+                if (!target) return;
+                setEditTargetId(id);
+                setGameMode(target.gameMode || 'CASH');
+                setEntryCount(target.entryCount || 1);
+                setMoneyIn(target.moneyIn || 0);
+                setMoneyOut(target.moneyOut || 0);
+                setRank(target.rank || 0);
+                setLocation(target.location || '');
+                setMemo(target.memo || '');
+                setMainFactor(target.mainFactor || null);
+                setSubTags(target.subTags || []);
+                setStreetTags(target.streetTags || []);
+                setContextTags(target.contextTags || []);
+                setStartTime(target.startTime || '');
+                setEndTime(target.endTime || '');
+                setDateMode('MANUAL');
+                setManualDate(target.date.slice(0, 10));
+                setView('INPUT');
+            };
+
+            const resetInputs = () => {
+                setEditTargetId(null);
+                setMoneyIn(0); setMoneyOut(0); setLocation(''); setMemo('');
+                setStartTime(''); setEndTime(''); setMainFactor(null);
+                setSubTags([]); setStreetTags([]);
+                setDateMode('AUTO');
+                setManualDate(new Date().toISOString().slice(0, 10));
+            };
+
+            const handleNickSave = () => {
+                if (!nickname.trim()) return alert('닉네임을 입력해주세요.');
+                localStorage.setItem('hdna_nickname', nickname);
+            };
+
+            const getActiveTags = (factor) => {
+                if (!factor) return [];
+                return TAGS_DB[factor] || [];
+            };
+            const netValForInput = moneyOut - moneyIn;
+
+            if (!localStorage.getItem('hdna_nickname')) {
+                return (<div className="fade-in" style={{ padding: '40px 24px', textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}><img src={LOGO_URL} style={{ width: '120px', marginBottom: '20px', objectFit: 'contain', alignSelf: 'center' }} alt="logo" /><h1 style={{ marginBottom: '40px', color: 'var(--primary-dark)' }}>HoldemDNA<br />Smart Bankroll</h1><input type="text" value={nickname} onChange={e => setNickname(e.target.value)} placeholder="닉네임 입력" style={{ width: '100%', padding: '16px', borderRadius: '16px', background: '#FFF', border: '1px solid #EEE', marginBottom: '16px' }} /><button onClick={handleNickSave} style={{ width: '100%', background: 'var(--primary-dark)', color: '#FFF', padding: '16px', borderRadius: '16px', fontWeight: 'bold' }}>시작하기</button></div>);
+            }
+
+            if (view === 'SETTINGS') {
+                const exportData = () => { navigator.clipboard.writeText(JSON.stringify(history)); alert('복사되었습니다.'); };
+                const importData = () => { const t = prompt('백업 코드를 붙여넣으세요'); if (t) { try { setHistory(JSON.parse(t)); localStorage.setItem('hdna_bnk_v12', t); alert('복구 완료'); } catch { alert('오류'); } } };
+                const resetData = () => { if (confirm('전체 초기화 하시겠습니까?')) { setHistory([]); localStorage.removeItem('hdna_bnk_v12'); alert('초기화됨'); } };
+                return (
+                    <div className="slide-up" style={{ padding: '20px', minHeight: '100vh', background: '#FFF' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}><button onClick={() => setView('DASHBOARD')} style={{ fontSize: '24px', marginRight: '16px' }}>←</button><div style={{ fontSize: '18px', fontWeight: '700' }}>설정</div></div>
+                        <div className="card">
+                            <h3 style={{ fontSize: '14px', marginBottom: '12px' }}>바로가기</h3>
+                            <button onClick={() => window.open('https://HoldemDNA.app', '_blank')} style={{ width: '100%', padding: '16px', background: 'var(--primary-soft)', color: 'var(--primary-dark)', borderRadius: '12px', fontWeight: '700', marginBottom: '8px' }}>🌐 HoldemDNA.APP 방문하기</button>
+                            <button onClick={() => setInstallModalOpen(true)} style={{ width: '100%', padding: '16px', background: '#E3F2FD', color: '#1565C0', borderRadius: '12px', fontWeight: '700' }}>📱 홈 화면에 아이콘 추가</button>
+                        </div>
+                        <div className="card">
+                            <h3 style={{ fontSize: '14px', marginBottom: '12px' }}>데이터 관리</h3>
+                            <button onClick={exportData} style={{ width: '100%', padding: '14px', background: '#F5F5F5', borderRadius: '10px', marginBottom: '8px', textAlign: 'left', fontSize: '13px', fontWeight: '600' }}>📤 데이터 백업 (복사)</button>
+                            <button onClick={importData} style={{ width: '100%', padding: '14px', background: '#F5F5F5', borderRadius: '10px', textAlign: 'left', fontSize: '13px', fontWeight: '600' }}>📥 데이터 복구 (붙여넣기)</button>
+                        </div>
+                        <button onClick={resetData} style={{ width: '100%', padding: '16px', background: '#FFEBEE', color: 'red', borderRadius: '12px', fontWeight: '700' }}>🗑️ 전체 초기화</button>
+                        {installModalOpen && (<div className="modal-overlay" onClick={() => setInstallModalOpen(false)}><div className="modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}><h3 style={{ marginTop: 0 }}>📱 설치 가이드</h3><p style={{ fontSize: '13px', color: '#666', lineHeight: '1.5' }}><b>iPhone (Safari)</b><br />하단 [공유] 버튼 → '홈 화면에 추가'<br /><br /><b>Android (Chrome)</b><br />상단 [메뉴 ⋮] 버튼 → '홈 화면에 추가'</p><button onClick={() => setInstallModalOpen(false)} style={{ width: '100%', padding: '14px', background: 'var(--primary-dark)', color: '#FFF', borderRadius: '12px', fontWeight: 'bold' }}>닫기</button></div></div>)}
+                    </div>
+                );
+            }
+
+            if (view === 'DASHBOARD') {
+                return (
+                    <div className="fade-in" style={{ padding: '24px 20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <img src={LOGO_URL} style={{ width: '40px', height: '40px', borderRadius: '12px', objectFit: 'contain', background: '#F8F9FD' }} alt="logo" />
+                                <div><h1 style={{ fontSize: '20px', fontWeight: '800', margin: 0, color: 'var(--primary-dark)' }}>HoldemDNA</h1><div style={{ fontSize: '12px', color: '#888' }}>Smart Bankroll</div></div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button onClick={() => setInstallModalOpen(true)} style={{ fontSize: '20px', width: '40px', height: '40px', background: '#FFF', borderRadius: '12px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', border: '1px solid #7C66FF' }}>📲</button>
+                                <button onClick={() => setView('SETTINGS')} style={{ fontSize: '20px', width: '40px', height: '40px', background: '#FFF', borderRadius: '12px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>⚙️</button>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <button onClick={() => changeDate(-1)} style={{ fontSize: '20px', color: '#BBB' }}>◀</button>
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '18px', fontWeight: '800' }}>{dashMode === 'YEAR' ? `${currentDate.getFullYear()}년` : `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월`}</div>
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '4px' }}>
+                                    <button onClick={() => { setDashMode('MONTH'); soundEngine.playClick(); }} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: dashMode === 'MONTH' ? '#7C66FF' : '#EEE', color: dashMode === 'MONTH' ? '#FFF' : '#999' }}>월별</button>
+                                    <button onClick={() => { setDashMode('YEAR'); soundEngine.playClick(); }} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '10px', background: dashMode === 'YEAR' ? '#7C66FF' : '#EEE', color: dashMode === 'YEAR' ? '#FFF' : '#999' }}>연도별</button>
+                                </div>
+                            </div>
+                            <button onClick={() => changeDate(1)} style={{ fontSize: '20px', color: '#BBB' }}>▶</button>
+                        </div>
+
+                        <div className="card" style={{ background: 'linear-gradient(135deg, #9D8CFF 0%, #7C66FF 100%)', color: '#FFF' }}>
+                            <div style={{ marginBottom: '16px' }}><div style={{ opacity: 0.8, fontSize: '13px' }}>Net Profit</div><div style={{ fontSize: '32px', fontWeight: '900' }}>{periodAnalysis.profit > 0 ? '+' : ''}{formatKRW(periodAnalysis.profit)}</div></div>
+                            {history.length > 0 && (<div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: '12px', padding: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}><div style={{ fontSize: '24px' }}>{periodAnalysis.profit > 0 ? '🎉' : '🩹'}</div><div><div style={{ fontSize: '13px', fontWeight: 'bold' }}>{periodAnalysis.profit > 0 ? '이달의 승리 요인' : '이달의 주요 패인'}</div><div style={{ fontSize: '14px' }}>{periodAnalysis.profit > 0 ? <span><b>{periodAnalysis.factor}</b>: {periodAnalysis.reason || '종합 승리'}</span> : <span><b>{periodAnalysis.factor}</b>: {periodAnalysis.reason || '복합 요인'}</span>}</div></div></div>)}
+                        </div>
+
+                        <button onClick={() => { resetInputs(); setView('INPUT'); }} style={{ width: '100%', background: '#FFF', color: 'var(--primary-dark)', border: '2px solid var(--primary)', padding: '16px', borderRadius: '16px', fontSize: '16px', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(124, 102, 255, 0.15)', marginBottom: '24px' }}><span>✏️  기록 추가하기</span></button>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
+                            <div className="stat-box"><div className="stat-label">시급 (Hourly)</div><div className="stat-val">{periodAnalysis.hourly ? formatKRW(periodAnalysis.hourly) : '-'}</div></div>
+                            <div className="stat-box"><div className="stat-label">총 시간 (Time)</div><div className="stat-val" style={{ color: '#7C66FF' }}>{periodAnalysis.totalHours}h</div></div>
+                            <div className="stat-box"><div className="stat-label">승률 (Win%)</div><div className="stat-val" style={{ color: periodAnalysis.winRate >= 50 ? 'var(--success)' : 'var(--danger)' }}>{periodAnalysis.winRate}%</div></div>
+                            <div className="stat-box"><div className="stat-label">핸드 평균 (Avg)</div><div className="stat-val" style={{ color: periodAnalysis.avg >= 0 ? 'var(--text-main)' : 'var(--danger)' }}>{formatKRW(periodAnalysis.avg)}</div></div>
+                        </div>
+
+                        {filteredHistory.length > 1 && (<div className="card"><h3 style={{ fontSize: '14px', marginBottom: '12px', color: '#888' }}>수익 추세</h3><TrendChart data={[...filteredHistory].sort((a, b) => a.id - b.id)} /></div>)}
+                        {filteredHistory.length > 0 && <LocationAnalysis data={filteredHistory} />}
+                        {filteredHistory.length > 0 && <TagAnalysis data={filteredHistory} />}
+
+
+
+                        <h3 style={{ fontSize: '16px', color: '#555', marginBottom: '16px' }}>{dashMode === 'MONTH' ? '일별 기록' : '월별 기록'}</h3>
+                        {groupedHistory.length === 0 ? <div style={{ textAlign: 'center', color: '#999', padding: '40px' }}>기록이 없습니다.</div> :
+                            groupedHistory.map(g => (
+                                <DailyGroup key={g.date} date={g.date} sessions={g.sessions} onDelete={handleDelete} onEdit={startFullEdit} />
+                            ))
+                        }
+                        {installModalOpen && (<div className="modal-overlay" onClick={() => setInstallModalOpen(false)}><div className="modal-content" onClick={e => e.stopPropagation()} style={{ textAlign: 'left' }}><h3 style={{ marginTop: 0 }}>📲 바로가기 설치</h3><p style={{ fontSize: '13px', color: '#666', lineHeight: '1.5' }}>앱처럼 홈 화면에 추가하고 사용하세요!<br /><br /><b>iPhone (Safari)</b><br />하단 [공유] 버튼 → '홈 화면에 추가'<br /><br /><b>Android (Chrome/Samsung)</b><br />브라우저 메뉴 [⋮] → '홈 화면에 추가' / '앱 설치'</p><button onClick={() => setInstallModalOpen(false)} style={{ width: '100%', padding: '14px', background: 'var(--primary-dark)', color: '#FFF', borderRadius: '12px', fontWeight: 'bold' }}>알겠습니다</button></div></div>)}
+                    </div>
+                );
+            }
+
+            // Date Edit Modal
+
+
+            // Input View (Adding Time Inputs with Custom Select)
+            const TagGroup = ({ tags, selected, setTags }) => (<div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>{tags.map(t => (<button key={t} onClick={() => setTags(p => p.includes(t) ? p.filter(x => x !== t) : [...p, t])} style={{ padding: '8px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '600', background: selected.includes(t) ? 'var(--primary-soft)' : '#F2F4F6', color: selected.includes(t) ? 'var(--primary-dark)' : '#666', border: selected.includes(t) ? '1px solid var(--primary)' : '1px solid transparent' }}>{t}</button>))}</div>);
+            return (
+                <div className="slide-up" style={{ padding: '20px 20px 100px', background: '#FFF', minHeight: '100vh' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}><button onClick={() => setView('DASHBOARD')} style={{ fontSize: '24px', marginRight: '16px', color: '#333' }}>←</button><div style={{ fontSize: '18px', fontWeight: '700' }}>{editTargetId ? '세션 기록 수정' : '세션 기록'}</div></div>
+                    <div className="card">
+                        <div className="seg-control">
+                            <button className={`seg-btn ${gameMode === 'CASH' ? 'active' : ''}`} onClick={() => setGameMode('CASH')}>💰 캐시게임</button>
+                            <button className={`seg-btn ${gameMode === 'TOURNEY' ? 'active' : ''}`} onClick={() => setGameMode('TOURNEY')}>🏆 토너먼트</button>
+                            <button className={`seg-btn ${gameMode === 'SIDE' ? 'active' : ''}`} onClick={() => setGameMode('SIDE')}>🎲 사이드</button>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}><button onClick={() => setDateMode('AUTO')} style={{ flex: 1, padding: '10px', borderRadius: '10px', background: dateMode === 'AUTO' ? 'var(--primary-soft)' : '#F8F9FD', color: dateMode === 'AUTO' ? 'var(--primary-dark)' : '#999', fontWeight: 'Bold', fontSize: '13px' }}>오늘 (Auto)</button><button onClick={() => setDateMode('MANUAL')} style={{ flex: 1, padding: '10px', borderRadius: '10px', background: dateMode === 'MANUAL' ? 'var(--primary-soft)' : '#F8F9FD', color: dateMode === 'MANUAL' ? 'var(--primary-dark)' : '#999', fontWeight: 'Bold', fontSize: '13px' }}>날짜 선택</button></div>
+                        {dateMode === 'MANUAL' && (<input type="date" value={manualDate} onChange={e => setManualDate(e.target.value)} style={{ width: '100%', fontSize: '16px', fontWeight: '600', color: '#555', marginBottom: '16px', padding: '12px', background: '#F8F9FD', borderRadius: '12px' }} />)}
+                        <div style={{ width: '100%', height: '1px', background: '#F1F2F6', margin: '16px 0' }}></div>
+
+                        {/* Custom Time Picker */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+                            <SimpleTimeSelector label="시작 시간" value={startTime} onChange={setStartTime} />
+                            <div style={{ fontSize: '12px', color: '#CCC', marginTop: '16px' }}>~</div>
+                            <SimpleTimeSelector label="종료 시간" value={endTime} onChange={setEndTime} />
+                        </div>
+                        {playTime > 0 && <div style={{ textAlign: 'center', fontSize: '13px', color: '#7C66FF', fontWeight: '600', marginBottom: '16px' }}>⏱️ 총 플레이 시간: {playTime}시간</div>}
+
+                        <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="장소 입력 (옵션)" style={{ width: '100%', padding: '12px', background: '#F8F9FD', borderRadius: '12px', marginBottom: '12px' }} />
+                        <div style={{ width: '100%', height: '1px', background: '#F1F2F6', margin: '16px 0' }}></div>
+                        {gameMode === 'TOURNEY' && (<div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><span style={{ fontSize: '14px', fontWeight: '600', color: '#888' }}>엔트리</span><div style={{ background: '#F8F9FD', borderRadius: '10px', display: 'flex', padding: '4px' }}><button onClick={() => setEntryCount(Math.max(1, entryCount - 1))} style={{ width: '32px', fontWeight: 'bold' }}>-</button><span style={{ padding: '0 10px', lineHeight: '24px', fontWeight: 'bold' }}>{entryCount}</span><button onClick={() => setEntryCount(entryCount + 1)} style={{ width: '32px', fontWeight: 'bold' }}>+</button></div></div>)}
+                        <div style={{ marginBottom: '12px' }}><div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Money In</div><input type="number" value={moneyIn || ''} onChange={e => setMoneyIn(Number(e.target.value))} placeholder="0" style={{ width: '100%', background: '#F8F9FD', padding: '14px', borderRadius: '12px', fontSize: '18px', fontWeight: '700' }} /></div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>{[10000, 50000, 100000, 500000, 1000000].map(v => <button key={v} onClick={() => setMoneyIn(m => m + v)} style={{ flex: '1 0 18%', padding: '6px 4px', background: '#FFF', border: '1px solid #EEE', borderRadius: '8px', fontSize: '11px' }}>+{v / 10000}만</button>)}<button onClick={() => setMoneyIn(0)} style={{ padding: '6px 10px', background: '#FFEBEE', color: 'red', borderRadius: '8px', fontSize: '11px' }}>C</button></div>
+                        <div style={{ marginBottom: '12px' }}><div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Money Out</div><input type="number" value={moneyOut || ''} onChange={e => setMoneyOut(Number(e.target.value))} placeholder="0" style={{ width: '100%', background: '#F8F9FD', padding: '14px', borderRadius: '12px', fontSize: '18px', fontWeight: '700' }} /></div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>{[10000, 50000, 100000, 500000, 1000000].map(v => <button key={v} onClick={() => setMoneyOut(m => m + v)} style={{ flex: '1 0 18%', padding: '6px 4px', background: '#FFF', border: '1px solid #EEE', borderRadius: '8px', fontSize: '11px' }}>+{v / 10000}만</button>)}<button onClick={() => setMoneyOut(0)} style={{ padding: '6px 10px', background: '#FFEBEE', color: 'red', borderRadius: '8px', fontSize: '11px' }}>C</button></div>
+                        {gameMode === 'TOURNEY' && (<div style={{ marginTop: '16px', borderTop: '1px solid #EEE', paddingTop: '16px' }}><div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>최종 등수</div><input type="number" value={rank || ''} onChange={e => setRank(Number(e.target.value))} placeholder="0" style={{ width: '100%', background: '#F8F9FD', padding: '14px', borderRadius: '12px', fontSize: '18px', fontWeight: '700' }} /></div>)}
+                    </div>
+                    {moneyIn > 0 && (<div style={{ textAlign: 'center', marginBottom: '24px', fontSize: '28px', fontWeight: '900', color: netValForInput >= 0 ? 'var(--success)' : 'var(--danger)' }}>{netValForInput > 0 ? '+' : ''}{formatKRW(netValForInput)}</div>)}
+                    {moneyIn > 0 && (<div className="fade-in">
+                        <h3 style={{ fontSize: '16px', marginBottom: '12px' }}>핵심 요인 분석</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '20px' }}>
+                            {netValForInput >= 0 ? (
+                                <>
+                                    <button onClick={() => setMainFactor('SKILL')} style={{ padding: '16px 4px', borderRadius: '16px', background: mainFactor === 'SKILL' ? 'var(--primary)' : '#F3F1FF', color: mainFactor === 'SKILL' ? '#FFF' : '#666', border: mainFactor === 'SKILL' ? '2px solid var(--primary-dark)' : '1px solid transparent' }}><div style={{ fontSize: '24px', marginBottom: '4px' }}>🧠</div><div style={{ fontSize: '13px', fontWeight: '700' }}>실력 (Outplayed)</div></button>
+                                    <button onClick={() => setMainFactor('LUCK')} style={{ padding: '16px 4px', borderRadius: '16px', background: mainFactor === 'LUCK' ? 'var(--accent-blue)' : '#E3F2FD', color: mainFactor === 'LUCK' ? '#FFF' : '#5C6BC0', border: mainFactor === 'LUCK' ? '2px solid #1E88E5' : '1px solid transparent' }}><div style={{ fontSize: '24px', marginBottom: '4px' }}>🍀</div><div style={{ fontSize: '13px', fontWeight: '700' }}>런 (Luck)</div></button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={() => setMainFactor('MISTAKE')} style={{ padding: '16px 4px', borderRadius: '16px', background: mainFactor === 'MISTAKE' ? 'var(--accent-pink)' : '#FFEBEE', color: mainFactor === 'MISTAKE' ? '#FFF' : '#E57373', border: mainFactor === 'MISTAKE' ? '2px solid #D32F2F' : '1px solid transparent' }}><div style={{ fontSize: '24px', marginBottom: '4px' }}>💩</div><div style={{ fontSize: '13px', fontWeight: '700' }}>실수 (Mistake)</div></button>
+                                    <button onClick={() => setMainFactor('BADBEAT')} style={{ padding: '16px 4px', borderRadius: '16px', background: mainFactor === 'BADBEAT' ? '#ECEFF1' : '#F5F5F5', color: mainFactor === 'BADBEAT' ? '#333' : '#999', border: mainFactor === 'BADBEAT' ? '2px solid #78909C' : '1px solid transparent' }}><div style={{ fontSize: '24px', marginBottom: '4px' }}>☔</div><div style={{ fontSize: '13px', fontWeight: '700' }}>배드빗 (Bad Beat)</div></button>
+                                </>
+                            )}
+                        </div>
+                        {mainFactor && <div className="card fade-in" style={{ borderColor: 'var(--primary-soft)' }}><div style={{ marginBottom: '12px' }}><div style={{ fontSize: '12px', fontWeight: 'bold', color: '#888', marginBottom: '6px' }}>스트릿</div><TagGroup tags={['Preflop', 'Flop', 'Turn', 'River']} selected={streetTags} setTags={setStreetTags} /></div><div style={{ marginBottom: '12px' }}><div style={{ fontSize: '12px', fontWeight: 'bold', color: '#888', marginBottom: '6px' }}>상세 태그</div><TagGroup tags={getActiveTags(mainFactor)} selected={subTags} setTags={setSubTags} /></div><div><div style={{ fontSize: '12px', fontWeight: 'bold', color: '#888', marginBottom: '6px' }}>메모</div><textarea value={memo} onChange={e => setMemo(e.target.value)} style={{ width: '100%', height: '50px', background: '#FAFAFA', border: '1px solid #EEE', borderRadius: '10px', padding: '10px', fontSize: '13px' }} placeholder="상세 내용 기록" /></div></div>}
+                    </div>)}
+                    <button onClick={handleSave} style={{ position: 'fixed', bottom: '20px', left: '20px', right: '20px', background: 'var(--primary-dark)', color: '#FFF', padding: '18px', borderRadius: '16px', fontWeight: '800', fontSize: '18px', boxShadow: '0 8px 24px rgba(124, 102, 255, 0.4)' }}>{editTargetId ? '수정 완료' : '저장하기'}</button>
+                    {/* Result Modal */}
+                    {modalOpen && (
+                        <div className="modal-overlay" onClick={() => { setModalOpen(false); setView('DASHBOARD'); }}>
+                            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                                <div style={{ fontSize: '40px', marginBottom: '16px' }}>{currentNet > 0 ? '🎉' : '🍵'}</div>
+                                <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '8px', color: 'var(--primary-dark)' }}>Saved!</h2>
+                                <div style={{ fontSize: '15px', fontWeight: '600', color: '#555', marginBottom: '20px', marginTop: '10px', wordBreak: 'keep-all', lineHeight: '1.5' }}>
+                                    {modalQuote && `"${modalQuote}"`}
+                                </div>
+                                <button onClick={() => { setModalOpen(false); setView('DASHBOARD'); }} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--primary-dark)', color: '#FFF', fontWeight: 'bold' }}>확인</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
